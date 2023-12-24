@@ -11,21 +11,28 @@ from app.api.validators import (check_name_duplicate,
                                 check_charity_project_is_not_empty,
                                 check_full_amount_not_less_than_invested,
                                 check_charity_project_not_closed)
+from app.services import create_project_and_donate
+from app.core.user import current_superuser
 
 router = APIRouter()
 
 
 @router.post(
     '/',
-    response_model=CharityProjectDB
+    response_model=CharityProjectDB,
+    response_model_exclude_none=True,
+    dependencies=[Depends(current_superuser)]
 )
 async def create_new_charity_project(
         charity_project: CharityProjectCreate,
         session: AsyncSession = Depends(get_async_session),
 ):
-    await check_name_duplicate(charity_project.name, session)
+    # await check_name_duplicate(charity_project.name, session)
     new_charity_project = await charity_project_crud.create(
         charity_project, session
+    )
+    new_charity_project = await create_project_and_donate(
+        session
     )
     return new_charity_project
 
@@ -46,6 +53,7 @@ async def get_all_charity_projects(
     '/{project_id}',
     response_model=CharityProjectDB,
     response_model_exclude_none=True,
+    dependencies=[Depends(current_superuser)]
 )
 async def partially_update_charity_project(
     charity_project_id: int,
@@ -55,8 +63,6 @@ async def partially_update_charity_project(
     charity_project = await check_charity_project_exists(
         charity_project_id, session
     )
-    if obj_in.name is not None:
-        await check_name_duplicate(obj_in.name, session)
     await check_charity_project_not_closed(
         charity_project_id, session
     )
@@ -73,12 +79,16 @@ async def partially_update_charity_project(
     '/{project_id}',
     response_model=CharityProjectDB,
     response_model_exclude_none=True,
+    dependencies=[Depends(current_superuser)]
 )
 async def remove_charity_project(
     charity_project_id: int,
     session: AsyncSession = Depends(get_async_session)
 ):
     charity_project = await check_charity_project_exists(
+        charity_project_id, session
+    )
+    await check_charity_project_not_closed(
         charity_project_id, session
     )
     await check_charity_project_is_not_empty(
@@ -88,3 +98,16 @@ async def remove_charity_project(
         charity_project, session
     )
     return charity_project
+
+
+# @router.get(
+#     '/',
+#     response_model=CharityProjectDB,
+#     response_model_exclude_none=True
+# )
+# async def get_project_to_donate(
+#         session: AsyncSession = Depends(get_async_session)
+# ):
+#     project_to_donate = await charity_project_crud.get_project_to_donate(session)
+
+#     return project_to_donate

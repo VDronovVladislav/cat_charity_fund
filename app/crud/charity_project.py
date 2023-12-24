@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +22,20 @@ class CRUDCharityProject(CRUDBase):
         )
         db_charityproject_id = db_charityproject_id.scalars().first()
         return db_charityproject_id
+
+    async def get_project_to_donate(
+            self,
+            session: AsyncSession
+    ) -> CharityProject:
+        project_to_donate = await session.execute(
+            select(CharityProject).where(
+                CharityProject.fully_invested == 0
+            ).order_by(
+                CharityProject.create_date
+            ).limit(1)
+        )
+        project_to_donate = project_to_donate.scalars().first()
+        return project_to_donate
 
 
 charity_project_crud = CRUDCharityProject(CharityProject)

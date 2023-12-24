@@ -17,7 +17,7 @@ async def check_name_duplicate(
     )
     if charityproject_id is not None:
         raise HTTPException(
-            status_code=422,
+            status_code=400,
             detail='Такой благотворительный проект уже создан!'
         )
 
@@ -46,10 +46,10 @@ async def check_charity_project_is_not_empty(
             CharityProject.id == charity_project_id
         )
     )
-    if invested_amount != 0:
+    if invested_amount.scalars().first() != 0:
         raise HTTPException(
-            status_code=422,
-            detail='Нельзя удалить проект, в который уже инвестированы деньги!'
+            status_code=400,
+            detail='В проект были внесены средства, не подлежит удалению!'
         )
 
 
@@ -62,9 +62,9 @@ async def check_charity_project_not_closed(
             CharityProject.id == charity_project_id
         )
     )
-    if fully_invested is True:
+    if fully_invested.scalars().first() is True:
         raise HTTPException(
-            status_code=422,
+            status_code=400,
             detail='Закрытый проект нельзя редактировать!'
         )
 
@@ -83,8 +83,8 @@ async def check_full_amount_not_less_than_invested(
             CharityProject.id == charity_project_id
         )
     )
-    if full_amount < invested_amount:
+    if full_amount.scalars().first() < invested_amount.scalars().first() or full_amount.scalars().first() == 0:
         raise HTTPException(
-            status_code=422,
+            status_code=400,
             detail='Нельзя установить требуемую сумму меньше уже вложенной!'
         )

@@ -7,6 +7,6 @@ class CharityProject(BaseModel):
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=False)
 
-    __table_args__ = (
-        CheckConstraint("LENGTH(description) >= 1"),
-    )
+    # __table_args__ = (
+    #     CheckConstraint("LENGTH(description) >= 1"),
+    # )
