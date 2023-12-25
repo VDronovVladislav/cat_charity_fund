@@ -1,1 +1,1 @@
-from .services import create_donation, create_project_and_donate
+from .services import create_donation, create_project_and_donate # noqa
