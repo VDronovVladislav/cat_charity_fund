@@ -17,7 +17,7 @@ router = APIRouter()
     '/',
     response_model=DonationLowDB,
     dependencies=[Depends(current_user)],
-    #response_model_exclude={'comment'}
+    response_model_exclude_none=True
 )
 async def create_new_donation(
     donation: DonationCreate,

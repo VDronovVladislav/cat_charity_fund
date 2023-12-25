@@ -37,7 +37,9 @@ async def create_donation(
             session
         )
         if project_to_donate:
-            donation_total, project_to_donate, donation = calculation(donation, project_to_donate)
+            donation_total, project_to_donate, donation = calculation(
+                donation, project_to_donate
+            )
             session.add(donation)
             session.add(project_to_donate)
             await session.commit()
@@ -59,7 +61,9 @@ async def create_project_and_donate(
             session
         )
         if donation_to_donate:
-            donation_total, project, donation_to_donate = calculation(donation_to_donate, project_to_donate)
+            _, _, donation_to_donate = calculation(
+                donation_to_donate, project_to_donate
+            )
             session.add(donation_to_donate)
             session.add(project_to_donate)
             await session.commit()

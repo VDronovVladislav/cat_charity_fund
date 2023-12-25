@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import charity_project_crud
@@ -11,14 +10,14 @@ async def check_name_duplicate(
         session: AsyncSession
 ) -> None:
     charityproject_id = (
-        charity_project_crud.get_charityproject_id_by_name(
+        await charity_project_crud.get_charityproject_id_by_name(
             charity_project_name, session
         )
     )
     if charityproject_id is not None:
         raise HTTPException(
             status_code=400,
-            detail='Такой благотворительный проект уже создан!'
+            detail='Проект с таким именем уже существует!'
         )
 
 
@@ -41,50 +40,40 @@ async def check_charity_project_is_not_empty(
         charity_project_id: int,
         session: AsyncSession,
 ) -> None:
-    invested_amount = await session.execute(
-        select(CharityProject.invested_amount).where(
-            CharityProject.id == charity_project_id
-        )
+    charity_project = await charity_project_crud.get(
+        charity_project_id, session
     )
-    if invested_amount.scalars().first() != 0:
+    if charity_project.invested_amount > 0:
         raise HTTPException(
             status_code=400,
             detail='В проект были внесены средства, не подлежит удалению!'
         )
+    return charity_project
 
 
 async def check_charity_project_not_closed(
         charity_project_id: int,
         session: AsyncSession,
 ) -> None:
-    fully_invested = await session.execute(
-        select(CharityProject.fully_invested).where(
-            CharityProject.id == charity_project_id
-        )
+    charity_project = await charity_project_crud.get(
+        charity_project_id, session
     )
-    if fully_invested.scalars().first() is True:
+    if charity_project.fully_invested is True:
         raise HTTPException(
             status_code=400,
             detail='Закрытый проект нельзя редактировать!'
         )
+    return charity_project
 
 
 async def check_full_amount_not_less_than_invested(
-        charity_project_id: int,
-        session: AsyncSession,
+        charity_project: CharityProject,
+        new_full_amount: int,
 ) -> None:
-    full_amount = await session.execute(
-        select(CharityProject.full_amount).where(
-            CharityProject.id == charity_project_id
-        )
-    )
-    invested_amount = await session.execute(
-        select(CharityProject.invested_amount).where(
-            CharityProject.id == charity_project_id
-        )
-    )
-    if full_amount.scalars().first() < invested_amount.scalars().first() or full_amount.scalars().first() == 0:
-        raise HTTPException(
-            status_code=400,
-            detail='Нельзя установить требуемую сумму меньше уже вложенной!'
-        )
+    if new_full_amount:
+        if new_full_amount < charity_project.invested_amount:
+            raise HTTPException(
+                status_code=400,
+                detail='Нельзя установить требуемую сумму меньше уже вложенной!'
+            )
+    return charity_project
