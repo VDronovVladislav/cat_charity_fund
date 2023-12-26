@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
@@ -28,13 +27,10 @@ async def create_new_charity_project(
         session: AsyncSession = Depends(get_async_session),
 ):
     await check_name_duplicate(charity_project.name, session)
-    new_charity_project = await charity_project_crud.create(
+    await charity_project_crud.create(
         charity_project, session
     )
-    new_charity_project = await create_project_and_donate(
-        session
-    )
-    return new_charity_project
+    return await create_project_and_donate(session)
 
 
 @router.get(
@@ -45,8 +41,7 @@ async def create_new_charity_project(
 async def get_all_charity_projects(
     session: AsyncSession = Depends(get_async_session)
 ):
-    charity_projects = await charity_project_crud.get_multi(session)
-    return charity_projects
+    return await charity_project_crud.get_multi(session)
 
 
 @router.patch(
@@ -70,10 +65,7 @@ async def partially_update_charity_project(
     await check_full_amount_not_less_than_invested(
         charity_project, obj_in.full_amount
     )
-    charity_project = await charity_project_crud.update(
-        charity_project, obj_in, session
-    )
-    return charity_project
+    return await charity_project_crud.update(charity_project, obj_in, session)
 
 
 @router.delete(
@@ -91,7 +83,4 @@ async def remove_charity_project(
     await check_charity_project_is_not_empty(
         project_id, session
     )
-    charity_project = await charity_project_crud.remove(
-        charity_project, session
-    )
-    return charity_project
+    return await charity_project_crud.remove(charity_project, session)
